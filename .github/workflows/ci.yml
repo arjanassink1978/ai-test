@@ -84,19 +84,6 @@ jobs:
           done
           echo "Frontend did not start in time" && exit 1
 
-      - name: Install Playwright system dependencies (apt)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libnss3 \
-            libatk-bridge2.0-0 \
-            libgtk-3-0 \
-            libxss1 \
-            libasound2 \
-            libgbm1 \
-            libxshmfence1 \
-            libvpx8
-
       - name: Install Playwright browser dependencies
         working-directory: frontend
         run: npx playwright install-deps
