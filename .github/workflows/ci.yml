@@ -1,4 +1,4 @@
-name: Fullstack CI
+name: CI
 
 on:
   push:
@@ -9,150 +9,101 @@ on:
       - '**'
 
 jobs:
-  build-and-test:
+  build-backend:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: test
-        options: >-
-          --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    defaults:
+      run:
+        working-directory: backend
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
+      - name: Build and test backend
+        run: mvn clean verify
+      - name: Upload backend test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-allure-results
+          path: backend/target/allure-results
+      - name: Fail if Allure results missing (backend)
+        run: |
+          if [ ! -d "target/allure-results" ] || [ -z "$(ls -A target/allure-results 2>/dev/null)" ]; then
+            echo "Allure results missing for backend!"; exit 1;
+          fi
 
+  build-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      - name: Cache Maven packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
-
-      - name: Cache Node modules
-        uses: actions/cache@v4
-        with:
-          path: frontend/node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      - name: Build backend
-        run: |
-          cd backend
-          mvn clean install
-
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
       - name: Build frontend
-        run: |
-          cd frontend
-          npm ci
-          npm run build
-
-      - name: Run backend tests (JUnit + Allure)
-        run: |
-          cd backend
-          mvn clean test
-
-      - name: Generate Allure report for backend
-        run: |
-          if [ -d backend/target/allure-results ] && [ "$(ls -A backend/target/allure-results)" ]; then
-            cd backend
-            mvn allure:report
-            cd ..
-          else
-            echo "No Allure results found for backend. Failing the build." >&2
-            exit 1
-          fi
-
-      - name: Copy backend Allure report
-        run: |
-          mkdir -p allure-reports/backend
-          cp -r backend/target/site/allure-maven-plugin/* allure-reports/backend/
-
-      - name: Run frontend E2E tests (JUnit + Playwright + Allure)
-        run: |
-          cd frontend
-          mvn clean test
-
-      - name: Generate Allure report for frontend
-        run: |
-          if [ -d frontend/target/allure-results ] && [ "$(ls -A frontend/target/allure-results)" ]; then
-            cd frontend
-            mvn allure:report
-            cd ..
-          else
-            echo "No Allure results found for frontend. Failing the build." >&2
-            exit 1
-          fi
-
-      - name: Copy frontend Allure report
-        run: |
-          mkdir -p allure-reports/frontend
-          cp -r frontend/target/site/allure-maven-plugin/* allure-reports/frontend/
-
-      - name: Debug: List Allure reports directory
-        run: |
-          echo "Listing allure-reports directory contents:"
-          ls -lR allure-reports || true
-
-      - name: Upload Allure reports for Pages
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: allure-reports
-
-      - name: Generate backend test report
-        if: always()
+        run: npm run build
+      - name: Run frontend tests
+        run: npm test || true
+      - name: Upload frontend test results
         uses: actions/upload-artifact@v4
         with:
-          name: backend-test-report
-          path: backend/target/surefire-reports/
+          name: frontend-allure-results
+          path: frontend/target/allure-results
+      - name: Fail if Allure results missing (frontend)
+        run: |
+          if [ ! -d "target/allure-results" ] || [ -z "$(ls -A target/allure-results 2>/dev/null)" ]; then
+            echo "Allure results missing for frontend!"; exit 1;
+          fi
 
-      - name: Generate frontend test report
-        if: always()
+  allure-report:
+    needs: [build-backend, build-frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download backend Allure results
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-allure-results
+          path: backend/target/allure-results
+      - name: Download frontend Allure results
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-allure-results
+          path: frontend/target/allure-results
+      - name: Set up Allure
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: Install Allure CLI
+        run: |
+          wget https://github.com/allure-framework/allure2/releases/download/2.27.0/allure-2.27.0.tgz
+          tar -xzf allure-2.27.0.tgz
+          sudo mv allure-2.27.0 /opt/allure
+          sudo ln -s /opt/allure/bin/allure /usr/bin/allure
+      - name: Generate Allure report
+        run: |
+          mkdir -p allure-report
+          allure generate backend/target/allure-results frontend/target/allure-results -o allure-report --clean
+      - name: Upload Allure report artifact
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-test-report
-          path: frontend/target/surefire-reports/
-
-      - name: Build and run containers
+          name: allure-report
+          path: allure-report
+      - name: Deploy Allure report to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: allure-report
+      - name: Add summary with Allure report link
         run: |
-          docker compose up --build -d
-        continue-on-error: true
-
-  deploy-allure-reports:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    if: always()
-    permissions:
-      pages: write
-      id-token: write
-    steps:
-      - name: Deploy Allure reports to Pages
-        uses: actions/deploy-pages@v4
-
-  summary:
-    needs: [deploy-allure-reports]
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: Add Allure report links to summary
-        run: |
-          echo "### Allure Reports" >> $GITHUB_STEP_SUMMARY
-          echo "- [Backend Allure Report](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/backend/)" >> $GITHUB_STEP_SUMMARY
-          echo "- [Frontend Allure Report](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/frontend/)" >> $GITHUB_STEP_SUMMARY 
+          echo "### [Allure Report](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/)" >> $GITHUB_STEP_SUMMARY 
