@@ -75,7 +75,8 @@ jobs:
             mvn allure:report
             cd ..
           else
-            echo "No Allure results found for backend, skipping report generation."
+            echo "No Allure results found for backend. Failing the build." >&2
+            exit 1
           fi
       - name: Copy backend Allure report
         run: |
@@ -93,7 +94,8 @@ jobs:
             mvn allure:report
             cd ..
           else
-            echo "No Allure results found for frontend, skipping report generation."
+            echo "No Allure results found for frontend. Failing the build." >&2
+            exit 1
           fi
       - name: Copy frontend Allure report
         run: |
