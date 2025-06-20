@@ -1,0 +1,24 @@
+# Java/Maven
+backend/target/
+**/target/
+
+# Node.js
+frontend/node_modules/
+frontend/.next/
+frontend/.env
+
+# Logs
+*.log
+
+# OS/Editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Test/coverage
+frontend/coverage/
+
+# Misc
+*.iml
+.env 
