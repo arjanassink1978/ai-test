@@ -132,8 +132,11 @@ jobs:
           allure_history: allure-history
           allure_results: merged-allure-results
 
-      - name: Ensure Allure history directory exists
-        run: mkdir -p allure-history && touch allure-history/.keep
+      - name: Ensure Allure history directory exists and is writable
+        run: |
+          sudo chown -R $USER:$USER allure-history || true
+          mkdir -p allure-history
+          touch allure-history/.keep
 
       - name: Publish Allure report to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
