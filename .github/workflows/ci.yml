@@ -119,7 +119,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-test-report
-          path: frontend/test-results/
+          path: frontend/target/surefire-reports/
 
       - name: Build and run containers
         run: |
