@@ -121,16 +121,12 @@ jobs:
           mkdir -p merged-allure-results
           cp -r backend/target/allure-results/* merged-allure-results/ || true
           cp -r frontend/target/allure-results/* merged-allure-results/ || true
-      - name: Generate Allure report
+      - name: Generate and publish Allure report
         uses: simple-elf/allure-report-action@v1.8
         with:
           allure_results: merged-allure-results
           allure_report: allure-report
           gh_pages: gh-pages
-      - name: Upload Allure report as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: allure-report
-          path: allure-report
       - name: Add summary with Allure report link
-        run: echo "Allure report: https://arjanassink1978.github.io/ai-test/" >> $GITHUB_STEP_SUMMARY
+        run: |
+          echo "Allure report: https://arjanassink1978.github.io/ai-test/" >> $GITHUB_STEP_SUMMARY
