@@ -51,6 +51,20 @@ jobs:
         run: npm run lint
       - name: Build frontend
         run: npm run build
+      # Start Next.js server in the background
+      - name: Start Next.js server
+        run: npm run start &
+        env:
+          NODE_ENV: production
+      # Wait for Next.js to be ready
+      - name: Wait for Next.js to be ready
+        run: |
+          for i in {1..30}; do
+            nc -z localhost 3000 && echo "Next.js is up!" && exit 0
+            echo "Waiting for Next.js..."
+            sleep 2
+          done
+          echo "Next.js did not start in time" && exit 1
       - name: Run frontend JS/TS tests
         run: npm test || true
       - name: Set up JDK 17
