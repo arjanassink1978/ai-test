@@ -15,6 +15,7 @@ public class DataInitializer {
                 admin.setUsername("admin");
                 admin.setEmail("admin@test.nl");
                 admin.setPassword(passwordEncoder.encode("admin1234"));
+                admin.setRole(Role.ADMIN);
                 userRepository.save(admin);
             }
         };
