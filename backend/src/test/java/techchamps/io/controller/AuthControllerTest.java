@@ -1,4 +1,4 @@
-package techchamps.io;
+package techchamps.io.controller;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,13 +7,16 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import techchamps.io.repository.UserRepository;
+import techchamps.io.model.User;
+import techchamps.io.model.Role;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
-@SpringBootTest
+@SpringBootTest(classes = techchamps.io.App.class)
 @AutoConfigureMockMvc
 @Transactional
 public class AuthControllerTest {
@@ -47,7 +50,10 @@ public class AuthControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json))
                 .andExpect(status().isOk())
-                .andExpect(content().string("User registered successfully"));
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.username").value(username))
+                .andExpect(jsonPath("$.email").value(email))
+                .andExpect(jsonPath("$.role").value("USER"));
         // Assert new user has USER role
         User user = userRepository.findByUsername(username).orElseThrow();
         org.junit.jupiter.api.Assertions.assertEquals(Role.USER, user.getRole());
