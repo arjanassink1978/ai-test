@@ -27,7 +27,17 @@ public class SecurityConfig {
         http
             .csrf().disable()
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/signup", "/api/auth/signin", "/h2-console/**").permitAll()
+                .requestMatchers(
+                    "/api/auth/signup",
+                    "/api/auth/signin",
+                    "/h2-console/**",
+                    // Swagger/OpenAPI endpoints
+                    "/swagger-ui.html",
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**",
+                    "/swagger-resources/**",
+                    "/webjars/**"
+                ).permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter(), UsernamePasswordAuthenticationFilter.class)
