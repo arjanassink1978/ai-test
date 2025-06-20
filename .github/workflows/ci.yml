@@ -70,8 +70,13 @@ jobs:
           mvn clean test
       - name: Generate Allure report for backend
         run: |
-          cd backend
-          mvn allure:report
+          if [ -d backend/target/allure-results ] && [ "$(ls -A backend/target/allure-results)" ]; then
+            cd backend
+            mvn allure:report
+            cd ..
+          else
+            echo "No Allure results found for backend, skipping report generation."
+          fi
       - name: Copy backend Allure report
         run: |
           mkdir -p allure-reports/backend
@@ -83,8 +88,13 @@ jobs:
           mvn clean test
       - name: Generate Allure report for frontend
         run: |
-          cd frontend
-          mvn allure:report
+          if [ -d frontend/target/allure-results ] && [ "$(ls -A frontend/target/allure-results)" ]; then
+            cd frontend
+            mvn allure:report
+            cd ..
+          else
+            echo "No Allure results found for frontend, skipping report generation."
+          fi
       - name: Copy frontend Allure report
         run: |
           mkdir -p allure-reports/frontend
