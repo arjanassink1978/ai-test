@@ -117,4 +117,5 @@ jobs:
           name: allure-report
           path: allure-report
       - name: Add summary with Allure report link
-        run: echo "Allure report: https://arjanassink1978.github.io/ai-test/" >> $GITHUB_STEP_SUMMARY 
+        run: echo "Allure report: https://arjanassink1978.github.io/ai-test/" >> $GITHUB_STEP_SUMMARY
+#end of workflow file
