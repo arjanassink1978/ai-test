@@ -128,10 +128,6 @@ jobs:
         run: |
           allure generate merged-allure-results --clean -o allure-history
 
-      - name: List Allure HTML output
-        run: |
-          ls -l allure-history
-
       - name: Ensure Allure history directory exists and is writable
         run: |
           sudo chown -R $USER:$USER allure-history || true
