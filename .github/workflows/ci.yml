@@ -72,17 +72,10 @@ jobs:
         run: |
           cd backend
           mvn allure:report
-      - name: Upload Allure report (backend) as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: allure-report-backend
-          path: backend/target/site/allure-maven-plugin
-      - name: Upload Allure report (backend) for Pages
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: backend/target/site/allure-maven-plugin
-          retention-days: 1
-          name: allure-report-backend-pages
+      - name: Copy backend Allure report
+        run: |
+          mkdir -p allure-reports/backend
+          cp -r backend/target/site/allure-maven-plugin/* allure-reports/backend/
 
       - name: Run frontend E2E tests (JUnit + Playwright + Allure)
         run: |
@@ -92,17 +85,15 @@ jobs:
         run: |
           cd frontend
           mvn allure:report
-      - name: Upload Allure report (frontend) as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: allure-report-frontend
-          path: frontend/target/site/allure-maven-plugin
-      - name: Upload Allure report (frontend) for Pages
+      - name: Copy frontend Allure report
+        run: |
+          mkdir -p allure-reports/frontend
+          cp -r frontend/target/site/allure-maven-plugin/* allure-reports/frontend/
+
+      - name: Upload Allure reports for Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: frontend/target/site/allure-maven-plugin
-          retention-days: 1
-          name: allure-report-frontend-pages
+          path: allure-reports
 
       - name: Generate backend test report
         if: always()
@@ -123,7 +114,7 @@ jobs:
           docker compose up --build -d
         continue-on-error: true
 
-  deploy-allure-backend:
+  deploy-allure-reports:
     needs: build-and-test
     runs-on: ubuntu-latest
     if: always()
@@ -131,31 +122,16 @@ jobs:
       pages: write
       id-token: write
     steps:
-      - name: Deploy Allure backend report to Pages
+      - name: Deploy Allure reports to Pages
         uses: actions/deploy-pages@v4
-        with:
-          artifact_name: allure-report-backend-pages
-
-  deploy-allure-frontend:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    if: always()
-    permissions:
-      pages: write
-      id-token: write
-    steps:
-      - name: Deploy Allure frontend report to Pages
-        uses: actions/deploy-pages@v4
-        with:
-          artifact_name: allure-report-frontend-pages
 
   summary:
-    needs: [deploy-allure-backend, deploy-allure-frontend]
+    needs: [deploy-allure-reports]
     runs-on: ubuntu-latest
     if: always()
     steps:
       - name: Add Allure report links to summary
         run: |
           echo "### Allure Reports" >> $GITHUB_STEP_SUMMARY
-          echo "- [Backend Allure Report](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/allure-report-backend/)" >> $GITHUB_STEP_SUMMARY
-          echo "- [Frontend Allure Report](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/allure-report-frontend/)" >> $GITHUB_STEP_SUMMARY 
+          echo "- [Backend Allure Report](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/backend/)" >> $GITHUB_STEP_SUMMARY
+          echo "- [Frontend Allure Report](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/frontend/)" >> $GITHUB_STEP_SUMMARY 
