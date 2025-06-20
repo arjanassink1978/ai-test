@@ -1,0 +1,49 @@
+# Java/Maven
+backend/target/
+**/target/
+
+# Node.js
+frontend/node_modules/
+frontend/.next/
+frontend/.env
+
+# Logs
+*.log
+
+# OS/Editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Test/coverage
+frontend/coverage/
+
+# Misc
+*.iml
+.env
+
+# Ignore local Node.js binaries
+frontend/node/
+
+# Node.js/Next.js/Frontend
+frontend/.eslintcache
+frontend/.turbo/
+frontend/.cache/
+frontend/npm-debug.log
+frontend/yarn-debug.log
+frontend/yarn-error.log
+frontend/*.tsbuildinfo
+
+# Java/IDE
+backend/.classpath
+backend/.project
+backend/.settings/
+
+# Editor/IDE
+*.sublime-workspace
+*.sublime-project
+
+# Env files
+.env.*
+*.pid 
