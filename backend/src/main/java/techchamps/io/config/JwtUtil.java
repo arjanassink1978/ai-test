@@ -1,4 +1,4 @@
-package techchamps.io;
+package techchamps.io.config;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -31,6 +31,10 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody();
         return claims.getSubject();
+    }
+
+    public String extractUsername(String token) {
+        return getUsernameFromToken(token);
     }
 
     public boolean validateToken(String token) {

@@ -1,6 +1,7 @@
-package techchamps.io;
+package techchamps.io.model;
 
 import jakarta.persistence.*;
+import techchamps.io.model.Role;
 
 @Entity
 @Table(name = "users")

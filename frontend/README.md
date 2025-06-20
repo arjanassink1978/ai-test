@@ -1,3 +1,32 @@
+# Frontend Structure (Refactored)
+
+This frontend uses Next.js (App Router, TypeScript, Tailwind) and is organized for scalability and maintainability.
+
+## Key Directories
+
+- `src/app/` — Next.js app pages and layout
+- `src/components/` — Reusable UI components (e.g., AuthForm)
+- `src/features/auth/` — Auth-specific hooks, types, and API logic:
+  - `hooks.ts` — Custom hooks for signup/signin logic
+  - `api.ts` — API calls for auth
+  - `types.ts` — DTOs/interfaces for auth
+- `src/hooks/` — Generic custom hooks (future use)
+- `src/services/` — API client and service logic (future use)
+- `src/utils/` — Utility functions (future use)
+
+## Auth Flow Example
+- **Signup/Signin pages** use the `AuthForm` component and custom hooks from `features/auth`.
+- All form logic, API calls, and error handling are encapsulated in hooks and feature modules.
+
+## How to Extend
+- Add new features in `features/<feature>/`.
+- Add new UI components in `components/`.
+- Add shared logic in `hooks/`, `services/`, or `utils/` as needed.
+
+---
+
+This structure makes it easy to scale, test, and maintain the codebase.
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
