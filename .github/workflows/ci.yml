@@ -117,10 +117,16 @@ jobs:
           cp -r backend/target/allure-results/* merged-allure-results/ || true
           cp -r frontend/target/allure-results/* merged-allure-results/ || true
 
+      - name: Install Allure Commandline
+        run: |
+          wget https://github.com/allure-framework/allure2/releases/download/2.27.0/allure-2.27.0.tgz
+          tar -xzf allure-2.27.0.tgz
+          sudo mv allure-2.27.0 /opt/allure
+          sudo ln -s /opt/allure/bin/allure /usr/local/bin/allure
+
       - name: Generate Allure HTML report
         run: |
-          mkdir -p allure-history
-          npx allure generate merged-allure-results --clean -o allure-history
+          allure generate merged-allure-results --clean -o allure-history
 
       - name: Ensure Allure history directory exists and is writable
         run: |
