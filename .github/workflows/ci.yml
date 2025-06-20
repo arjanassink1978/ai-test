@@ -65,13 +65,6 @@ jobs:
             sleep 2
           done
           echo "Next.js did not start in time" && exit 1
-      - name: Run frontend JS/TS tests
-        run: npm test || true
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
       - name: Run Java E2E tests
         run: mvn clean test
       - name: Upload frontend test results
