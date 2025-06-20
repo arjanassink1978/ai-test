@@ -33,6 +33,7 @@ public class AuthController {
         user.setEmail(email);
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(password));
+        user.setRole(Role.USER);
         userRepository.save(user);
         return ResponseEntity.ok("User registered successfully");
     }

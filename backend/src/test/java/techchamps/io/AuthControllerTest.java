@@ -6,6 +6,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -14,9 +15,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Transactional
 public class AuthControllerTest {
     @Autowired
     private MockMvc mockMvc;
+    @Autowired
+    private UserRepository userRepository;
 
     @Test
     void adminSigninShouldSucceed() throws Exception {
@@ -28,17 +32,25 @@ public class AuthControllerTest {
                 .content(json))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").exists());
+        // Assert admin has ADMIN role
+        User admin = userRepository.findByUsername("admin").orElseThrow();
+        org.junit.jupiter.api.Assertions.assertEquals(Role.ADMIN, admin.getRole());
     }
 
     @Test
     void signupShouldSucceed() throws Exception {
         String unique = java.util.UUID.randomUUID().toString().substring(0, 8);
-        String json = String.format("{\"email\":\"%s@test.com\",\"username\":\"user%s\",\"password\":\"pass1234\"}", unique, unique);
+        String username = "user" + unique;
+        String email = unique + "@test.com";
+        String json = String.format("{\"email\":\"%s\",\"username\":\"%s\",\"password\":\"pass1234\"}", email, username);
         mockMvc.perform(post("/api/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json))
                 .andExpect(status().isOk())
                 .andExpect(content().string("User registered successfully"));
+        // Assert new user has USER role
+        User user = userRepository.findByUsername(username).orElseThrow();
+        org.junit.jupiter.api.Assertions.assertEquals(Role.USER, user.getRole());
     }
 
     @Test
