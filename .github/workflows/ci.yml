@@ -61,8 +61,7 @@ jobs:
         run: npm run build
         working-directory: frontend
       - name: Install Playwright browser dependencies
-        run: npx playwright install-deps
-        working-directory: frontend
+        run: mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install-deps"
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
