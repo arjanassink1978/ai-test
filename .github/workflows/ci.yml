@@ -85,7 +85,8 @@ jobs:
           echo "Frontend did not start in time" && exit 1
 
       - name: Install Playwright browser dependencies
-        run: mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install-deps"
+        working-directory: frontend
+        run: npx playwright install-deps
 
       - name: Run Playwright E2E tests (Java)
         working-directory: frontend
