@@ -119,4 +119,4 @@ jobs:
       - name: Dummy step to test YAML
         run: echo "YAML is valid"
       - name: Add summary with Allure report link
-        run: echo
+        run: true
