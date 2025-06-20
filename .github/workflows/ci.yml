@@ -135,12 +135,26 @@ jobs:
           mkdir -p merged-allure-results
           cp -r backend/target/allure-results/* merged-allure-results/ || true
           cp -r frontend/target/allure-results/* merged-allure-results/ || true
-      - name: Generate and publish Allure report
-        uses: simple-elf/allure-report-action@v1.8
+      - name: Load test report history
+        uses: actions/checkout@v3
+        if: always()
+        continue-on-error: true
         with:
-          allure_results: merged-allure-results
-          allure_report: allure-report
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Build Allure report with history
+        uses: simple-elf/allure-report-action@v1.8
+        if: always()
+        with:
           gh_pages: gh-pages
-      - name: Add summary with Allure report link
-        run: |
-          echo "Allure report: https://arjanassink1978.github.io/ai-test/" >> $GITHUB_STEP_SUMMARY
+          allure_history: allure-history
+          allure_results: merged-allure-results
+
+      - name: Publish Allure report to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        if: always()
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: allure-history
