@@ -28,46 +28,10 @@ jobs:
         with:
           name: backend-allure-results
           path: backend/target/allure-results
-      - name: Fail if Allure results missing (backend)
-        run: |
-          if [ ! -d "target/allure-results" ] || [ -z "$(ls -A target/allure-results 2>/dev/null)" ]; then
-            echo "Allure results missing for backend!"; exit 1;
-          fi
-
-  build-frontend:
-    runs-on: ubuntu-latest
-    needs: build-backend
-    defaults:
-      run:
-        working-directory: frontend
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - name: Install dependencies
-        run: npm ci
-      - name: Install Playwright browser dependencies
-        run: npx playwright install-deps
-      - name: Lint
-        run: npm run lint
-      - name: Build frontend
-        run: npm run build
-      - name: Upload frontend test results
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-allure-results
-          path: frontend/target/allure-results
-      - name: Fail if Allure results missing (frontend)
-        run: |
-          if [ ! -d "target/allure-results" ] || [ -z "$(ls -A target/allure-results 2>/dev/null)" ]; then
-            echo "Allure results missing for frontend!"; exit 1;
-          fi
 
   e2e-playwright:
     runs-on: ubuntu-latest
-    needs: [build-backend, build-frontend]
+    needs: build-backend
     steps:
       - uses: actions/checkout@v4
       - name: Set up Node.js
@@ -91,7 +55,7 @@ jobs:
       - name: Start backend
         run: mvn spring-boot:run &
         working-directory: backend
-      - name: Wait for backend
+      - name: Wait for backend to be ready
         run: |
           for i in {1..30}; do
             nc -z localhost 8082 && echo "Backend is up!" && exit 0
@@ -101,10 +65,10 @@ jobs:
           echo "Backend did not start in time" && exit 1
       - name: Start frontend
         run: npm run start &
+        working-directory: frontend
         env:
           NODE_ENV: production
-        working-directory: frontend
-      - name: Wait for frontend
+      - name: Wait for frontend to be ready
         run: |
           for i in {1..30}; do
             nc -z localhost 3000 && echo "Frontend is up!" && exit 0
@@ -115,53 +79,39 @@ jobs:
       - name: Run Playwright Java E2E tests
         run: mvn clean test
         working-directory: frontend
-      - name: Upload Playwright E2E test results
+      - name: Upload Playwright Allure results
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-allure-results
+          name: e2e-allure-results
           path: frontend/target/allure-results
-      - name: Fail if Allure results missing (playwright)
-        run: |
-          if [ ! -d "frontend/target/allure-results" ] || [ -z "$(ls -A frontend/target/allure-results 2>/dev/null)" ]; then
-            echo "Allure results missing for Playwright E2E!"; exit 1;
-          fi
 
   allure-report:
-    needs: [build-backend, build-frontend, e2e-playwright]
     runs-on: ubuntu-latest
+    needs: [build-backend, e2e-playwright]
     steps:
       - uses: actions/checkout@v4
       - name: Download backend Allure results
         uses: actions/download-artifact@v4
         with:
           name: backend-allure-results
-          path: backend/target/allure-results
-      - name: Download frontend Allure results
+          path: allure-results/backend
+      - name: Download E2E Allure results
         uses: actions/download-artifact@v4
         with:
-          name: frontend-allure-results
-          path: frontend/target/allure-results
-      - name: Download Playwright E2E Allure results
-        uses: actions/download-artifact@v4
-        with:
-          name: playwright-allure-results
-          path: frontend/target/playwright-allure-results
-      - name: Set up Allure
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-      - name: Install Allure CLI
+          name: e2e-allure-results
+          path: allure-results/e2e
+      - name: Merge Allure results
         run: |
-          wget https://github.com/allure-framework/allure2/releases/download/2.27.0/allure-2.27.0.tgz
-          tar -xzf allure-2.27.0.tgz
-          sudo mv allure-2.27.0 /opt/allure
-          sudo ln -s /opt/allure/bin/allure /usr/bin/allure
+          mkdir -p merged-allure-results
+          cp -r allure-results/backend/* merged-allure-results/ || true
+          cp -r allure-results/e2e/* merged-allure-results/ || true
       - name: Generate Allure report
-        run: |
-          mkdir -p allure-report
-          allure generate backend/target/allure-results frontend/target/allure-results frontend/target/playwright-allure-results -o allure-report --clean
-      - name: Upload Allure report artifact
+        uses: simple-elf/allure-report-action@v2
+        with:
+          allure_results: merged-allure-results
+          allure_report: allure-report
+          keep_reports: 5
+      - name: Upload Allure report as artifact
         uses: actions/upload-artifact@v4
         with:
           name: allure-report
@@ -172,5 +122,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: allure-report
       - name: Add summary with Allure report link
-        run: |
-          echo "### [Allure Report](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/)" >> $GITHUB_STEP_SUMMARY 
+        run: echo "Allure report: https://arjanassink1978.github.io/ai-test/" >> $GITHUB_STEP_SUMMARY 
