@@ -102,6 +102,11 @@ jobs:
           mkdir -p allure-reports/frontend
           cp -r frontend/target/site/allure-maven-plugin/* allure-reports/frontend/
 
+      - name: Debug: List Allure reports directory
+        run: |
+          echo "Listing allure-reports directory contents:"
+          ls -lR allure-reports || true
+
       - name: Upload Allure reports for Pages
         uses: actions/upload-pages-artifact@v3
         with:
